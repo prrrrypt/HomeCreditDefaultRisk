@@ -100,3 +100,27 @@ The dataset describes historical payment-difficulty labels, not a complete measu
 ## Data attribution
 
 Source: [Home Credit Default Risk, Kaggle competition](https://www.kaggle.com/competitions/home-credit-default-risk/data). Dataset files are not redistributed in this repository; use is subject to the competition's applicable rules.
+
+## Interactive Risk Analytics Dashboard
+
+An interactive Streamlit dashboard translates model evaluation results into business-oriented risk analytics.
+
+### Features
+
+- **Model Comparison:** Compare Logistic Regression and LightGBM using ROC-AUC, Average Precision, and Brier Score.
+- **Risk Segmentation:** Explore observed repayment-difficulty rates, predicted probabilities, lift, and cumulative gains across risk deciles.
+- **Financial Subgroups:** Examine risk and model performance across income, payment burden, and credit bureau availability.
+- **Review Scenarios:** Evaluate probability thresholds, fixed review capacities, and illustrative screening-cost assumptions.
+- **Explainability:** Explore global SHAP feature contributions to LightGBM predictions.
+
+### Run Locally
+
+Create the project environment using `environment.yml`, then run:
+
+```bash
+python -m streamlit run dashboard/app.py
+```
+
+The dashboard reads aggregated validation results from `reports/` and does not require downloading the raw Kaggle dataset.
+
+**Disclaimer:** This project is intended for educational and analytical purposes. The model and hypothetical cost scenarios are not validated for real-world lending decisions.
