@@ -89,14 +89,14 @@ The original fixed-capacity analysis produced the following results:
 
 | Requested Capacity | Applicants Reviewed | Positive Cases Captured | Recall | Modeled Cost |
 |---|---:|---:|---:|---:|
-| 5% | 3,076 | 995 | 20.04% | 2,061,900 |
-| 10% | 6,151 | 1,669 | 33.62% | 1,801,775 |
-| 15% | 9,226 | 2,176 | 43.83% | 1,625,150 |
-| 20% | 12,301 | 2,572 | 51.80% | 1,504,025 |
-| 25% | 15,376 | 2,909 | 58.59% | 1,412,400 |
-| 30% | 18,451 | 3,215 | 64.75% | 1,336,275 |
-| 40% | 24,601 | 3,697 | 74.46% | 1,249,025 |
-| 50% | 30,751 | 4,037 | 81.31% | 1,232,775 |
+| 5% | 3,075 | 995 | 20.04% | 2,061,900 |
+| 10% | 6,150 | 1,669 | 33.62% | 1,801,775 |
+| 15% | 9,225 | 2,176 | 43.83% | 1,625,150 |
+| 20% | 12,300 | 2,572 | 51.80% | 1,504,025 |
+| 25% | 15,375 | 2,909 | 58.59% | 1,412,400 |
+| 30% | 18,450 | 3,215 | 64.75% | 1,336,275 |
+| 40% | 24,600 | 3,697 | 74.46% | 1,249,025 |
+| 50% | 30,750 | 4,037 | 81.31% | 1,232,775 |
 
 *Rounding note:* The original implementation used ceiling rounding for requested capacities, resulting in 12,301 applications at the 20% level. This exceeds exactly 20% of the validation population by one application. A revised implementation using floor rounding is required for strict-capacity analysis.
 
