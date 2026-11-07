@@ -73,12 +73,11 @@ HomeCreditDefaultRisk/
 3. Create a virtual environment and install dependencies:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
+conda env create -f environment.yml
+conda activate homecredit
 ```
 
-4. Open `notebooks/01_exploration.ipynb`, followed by `notebooks/02_borrower_risk.ipynb`. Select the project's `.venv` kernel and run the cells from the top.
+4. Open `notebooks/01_exploration.ipynb`, followed by `notebooks/02_borrower_risk.ipynb`. Select the project's `.homecredit` kernel and run the cells from the top.
 
 Notebook paths assume they are executed from the `notebooks/` folder or the repository root. Raw dataset files are intentionally excluded from version control.
 
