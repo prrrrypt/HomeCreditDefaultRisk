@@ -1,20 +1,36 @@
-# Python virtual environment
+# Python virtual environments
 .venv/
+venv/
+env/
 __pycache__/
 *.pyc
+
+# Conda environment files (local)
+.conda/
 
 # Datasets
 data/raw/
 data/processed/
 *.duckdb
+*.duckdb.wal
+
+# Trained machine learning models
+models/
+*.joblib
+*.pkl
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
 
-# Environment and credentials
+# Environment variables and credentials
 .env
 .env.*
 kaggle.json
 
-# macOS
+# IDE and operating system files
 .DS_Store
+.vscode/
+
+# Temporary files
+*.log
+*.tmp
