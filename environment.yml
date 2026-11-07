@@ -16,3 +16,4 @@ dependencies:
   - jupyter
   - ipykernel
   - scipy
+  - shap
