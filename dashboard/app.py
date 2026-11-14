@@ -11,7 +11,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-st.set_page_config(page_title="Home Credit | Risk Analytics", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Home Credit | Risk Analytics", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
 ROOT = Path(__file__).resolve().parents[1]
 REPORTS = ROOT / "reports"
 
@@ -34,6 +34,15 @@ def pct(v: float) -> str:
     return f"{v:.2%}"
 
 
+with st.sidebar:
+    st.header("About this project")
+    st.markdown("**Home Credit Default Risk**\n\nExploratory credit risk modeling and portfolio analytics using SQL, LightGBM, and SHAP.")
+    st.markdown("**Data:** Kaggle Home Credit Default Risk\n\n**Evaluation:** stratified validation partition\n\n**Model:** LightGBM")
+    st.divider()
+    st.markdown("**How to use**")
+    st.markdown("1. Compare model metrics.\n2. Explore risk deciles.\n3. Adjust hypothetical costs.\n4. Review feature explanations.")
+    st.caption("The held-out test set is not shown. This is an analytical portfolio demonstration, not a credit decision tool.")
+
 st.title("Home Credit · Risk Analytics")
 st.caption("Portfolio research dashboard | Historical repayment-difficulty data | Validation sample only")
 st.warning(
@@ -47,6 +56,7 @@ model_tab, risk_tab, decision_tab, explain_tab = st.tabs(
 
 with model_tab:
     st.subheader("Model comparison")
+    st.markdown("**Question:** Does gradient boosting improve the ranking of repayment-difficulty cases compared with an interpretable linear baseline?")
     model_df = require_report("day06_model_comparison.csv")
     if model_df is not None:
         if "Unnamed: 0" in model_df.columns:
@@ -56,15 +66,24 @@ with model_tab:
         else:
             available = [x for x in ["ROC-AUC", "Average Precision", "Brier Score"] if x in model_df.columns]
             if available:
-                st.dataframe(model_df[["Model"] + available].set_index("Model").style.format({k: "{:.4f}" for k in available}), use_container_width=True)
+                by_model = model_df.set_index("Model")
+                if {"LightGBM", "Logistic Regression"}.issubset(by_model.index) and "ROC-AUC" in available:
+                    k1, k2, k3 = st.columns(3)
+                    k1.metric("LightGBM ROC-AUC", f"{by_model.loc['LightGBM', 'ROC-AUC']:.4f}")
+                    if "Average Precision" in available:
+                        k2.metric("LightGBM average precision", f"{by_model.loc['LightGBM', 'Average Precision']:.4f}")
+                    if "Brier Score" in available:
+                        k3.metric("LightGBM Brier score", f"{by_model.loc['LightGBM', 'Brier Score']:.4f}")
+                st.dataframe(model_df[["Model"] + available].set_index("Model").style.format({k: "{:.4f}" for k in available}), width="stretch")
                 if "ROC-AUC" in available:
                     fig = px.bar(model_df, x="Model", y="ROC-AUC", title="Validation ROC-AUC", text_auto=".4f")
                     fig.update_yaxes(range=[0, max(.8, float(model_df["ROC-AUC"].max()) + .02)])
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
     st.caption("Validation metrics reflect an already-developed model. The final held-out test set is not displayed.")
 
 with risk_tab:
     st.subheader("Risk deciles and cumulative capture")
+    st.markdown("**Question:** Does the model concentrate more recorded positive cases among applicants with higher scores?")
     deciles = require_report("day09_risk_deciles.csv")
     if deciles is not None:
         needed = {"Risk_Decile", "Observed_Rate", "Mean_Predicted_Risk", "Lift", "Applicants", "Positive_Cases"}
@@ -88,7 +107,7 @@ with risk_tab:
                           title="Observed versus predicted payment difficulty by decile")
             fig.update_yaxes(tickformat=".0%")
             fig.update_xaxes(dtick=1)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             gains = deciles.sort_values("Risk_Decile", ascending=False).copy()
             gains["Population share"] = gains["Applicants"].cumsum() / n
@@ -101,8 +120,10 @@ with risk_tab:
             fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], name="Random selection", line=dict(dash="dash")))
             fig.update_layout(title="Cumulative capture of positive cases", xaxis_title="Share of applicants reviewed",
                               yaxis_title="Share of positives captured", xaxis_tickformat=".0%", yaxis_tickformat=".0%")
-            st.plotly_chart(fig, use_container_width=True)
-            st.dataframe(deciles, use_container_width=True, hide_index=True)
+            st.plotly_chart(fig, width="stretch")
+            st.dataframe(deciles, width="stretch", hide_index=True)
+            st.download_button("Download decile summary CSV", deciles.to_csv(index=False).encode("utf-8"),
+                               file_name="risk_deciles_summary.csv", mime="text/csv")
 
     st.subheader("Financial segments")
     group_choice = st.selectbox("Segment", ["Income", "Annuity burden", "Bureau availability"])
@@ -119,11 +140,12 @@ with risk_tab:
             fig = px.bar(compare, x="Segment", y="Rate", color="Series", barmode="group",
                          title=f"Observed vs predicted rates — {group_choice}")
             fig.update_yaxes(tickformat=".1%")
-            st.plotly_chart(fig, use_container_width=True)
-        st.dataframe(segments, use_container_width=True, hide_index=True)
+            st.plotly_chart(fig, width="stretch")
+        st.dataframe(segments, width="stretch", hide_index=True)
 
 with decision_tab:
     st.subheader("Hypothetical review scenarios")
+    st.markdown("**Question:** How do review workload and assumed missed-case penalties affect a model-assisted prioritization scenario?")
     st.caption("All amounts are illustrative units. Flagging a case is assumed to avoid the missed-case penalty; this is not an observed intervention benefit.")
     review_cost = st.slider("Cost per review (hypothetical units)", 0, 200, 25, 5)
     missed_cost = st.slider("Cost per missed positive case (hypothetical units)", 50, 2000, 500, 50)
@@ -142,9 +164,9 @@ with decision_tab:
             k3.metric("Modeled cost", f"{best['Hypothetical cost']:,.0f} units")
             fig = px.line(costs, x="Threshold", y="Hypothetical cost", title="Cost sensitivity across probability thresholds")
             fig.add_vline(x=float(best["Threshold"]), line_dash="dash")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
             st.dataframe(costs[["Threshold", "Flagged", "Precision", "Recall", "FN", "Hypothetical cost"]],
-                         use_container_width=True, hide_index=True)
+                         width="stretch", hide_index=True)
 
     st.subheader("Fixed-capacity review")
     capacity_df = require_report("day10_capacity_analysis.csv")
@@ -178,11 +200,12 @@ with decision_tab:
                 fig = px.line(cap, x="Requested_Capacity", y="Hypothetical cost", markers=True,
                               title="Hypothetical cost versus fixed review capacity")
                 fig.update_xaxes(tickformat=".0%")
-                st.plotly_chart(fig, use_container_width=True)
-                st.dataframe(cap, hide_index=True, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
+                st.dataframe(cap, hide_index=True, width="stretch")
 
 with explain_tab:
     st.subheader("Model explanation — global SHAP importance")
+    st.markdown("**Question:** Which transformed model inputs have the greatest average influence on raw scores?")
     shap_df = require_report("day08_shap_importance.csv")
     if shap_df is not None:
         if {"Feature", "Mean Absolute SHAP"}.issubset(shap_df.columns):
@@ -190,10 +213,10 @@ with explain_tab:
             top = shap_df.nlargest(n_show, "Mean Absolute SHAP").sort_values("Mean Absolute SHAP")
             fig = px.bar(top, x="Mean Absolute SHAP", y="Feature", orientation="h",
                          title="Mean absolute SHAP (raw-score / log-odds units)")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
             st.caption("SHAP explains the fitted model's output, not causal effects. Feature names reflect transformed inputs.")
         else:
             st.error("Expected `Feature` and `Mean Absolute SHAP` in the SHAP CSV.")
 
 st.divider()
-st.caption("Research portfolio · Home Credit Default Risk · Aggregated validation analyses · Final held-out test results not included")
+st.caption("Research portfolio · Home Credit Default Risk · Aggregate validation analyses · Not intended for credit approval or denial")

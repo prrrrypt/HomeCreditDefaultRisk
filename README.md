@@ -124,3 +124,43 @@ python -m streamlit run dashboard/app.py
 The dashboard reads aggregated validation results from `reports/` and does not require downloading the raw Kaggle dataset.
 
 **Disclaimer:** This project is intended for educational and analytical purposes. The model and hypothetical cost scenarios are not validated for real-world lending decisions.
+
+## Interactive Risk Analytics Dashboard
+
+This project includes a Streamlit dashboard presenting credit risk modeling results in a business-oriented analytical interface.
+
+### Dashboard Features
+
+- **Model Performance:** Compare Logistic Regression and LightGBM using ROC-AUC, Average Precision, and Brier Score.
+- **Risk Segmentation:** Explore predicted-risk deciles, observed repayment-difficulty rates, and model lift.
+- **Cumulative Gains:** Examine positive-case capture under different hypothetical review capacities.
+- **Financial Segments:** Compare model performance across income quintiles, annuity burden, and credit bureau availability.
+- **Decision Analysis:** Explore hypothetical review costs, missed-case penalties, and probability threshold tradeoffs.
+- **Explainability:** Examine global SHAP feature importance.
+
+### Key Results
+
+- LightGBM achieved a validation ROC-AUC of **0.7541** and Average Precision of **0.2373**.
+- The highest predicted-risk decile had an observed difficulty rate of **27.13%**, representing **3.36× lift**.
+- The highest-scoring 20% of applications contained **51.80% of observed positive cases**.
+- Historical bureau feature engineering increased cross-validation Average Precision by approximately **5.23%** relative to an application-only model.
+
+### Run Locally
+
+```bash
+conda env create -f environment.yml
+conda activate homecredit
+python -m streamlit run dashboard/app.py
+```
+
+### Live Dashboard
+
+[Add your Streamlit URL after deployment]
+
+### Limitations
+
+All displayed predictive performance metrics are based on validation data. The final held-out test set has not been evaluated.
+
+The cost scenarios use hypothetical assumptions and do not represent actual financial savings or validated lending policies.
+
+This project is intended for educational research and portfolio demonstration, not automated credit decisions.
