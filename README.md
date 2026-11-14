@@ -2,6 +2,13 @@
 
 **SQL feature engineering · Predictive modeling · Model explainability · Decision analytics · Interactive dashboard**
 
+### Live Dashboard
+
+**[Explore the Interactive Credit Risk Dashboard](https://homecreditdefaultrisk.streamlit.app)**
+
+Explore held-out model evaluation, risk segmentation,
+SHAP explainability, and hypothetical review-cost scenarios.
+
 An end-to-end credit risk analytics portfolio project using the [Home Credit Default Risk dataset](https://www.kaggle.com/competitions/home-credit-default-risk). The project combines SQL-based credit history aggregation, Python exploratory analysis, interpretable and gradient-boosted classifiers, SHAP explanations, risk segmentation, and a Streamlit dashboard.
 
 The goal is to understand **which financial and credit-history characteristics are associated with recorded repayment difficulty**, how well models rank higher-risk applications, and how evaluation results translate into *illustrative* review-capacity tradeoffs. This is an educational analysis, **not** a production lending system.
