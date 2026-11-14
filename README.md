@@ -1,166 +1,249 @@
-# Home Credit Default Risk | Credit Risk Analytics
+# Home Credit Default Risk | End-to-End Risk Analytics
 
-An end-to-end **credit risk analytics** portfolio project investigating repayment difficulties using financial data, SQL, and Python. The current phase focuses on exploratory analysis and interpretable borrower segmentation; predictive modeling and a dashboard are planned.
+**SQL feature engineering · Predictive modeling · Model explainability · Decision analytics · Interactive dashboard**
 
-**Dataset:** [Home Credit Default Risk (Kaggle)](https://www.kaggle.com/competitions/home-credit-default-risk/data)  
-**Status:** Days 1–3 completed · feature engineering and modeling in progress
+An end-to-end credit risk analytics portfolio project using the [Home Credit Default Risk dataset](https://www.kaggle.com/competitions/home-credit-default-risk). The project combines SQL-based credit history aggregation, Python exploratory analysis, interpretable and gradient-boosted classifiers, SHAP explanations, risk segmentation, and a Streamlit dashboard.
 
-## Project objectives
+The goal is to understand **which financial and credit-history characteristics are associated with recorded repayment difficulty**, how well models rank higher-risk applications, and how evaluation results translate into *illustrative* review-capacity tradeoffs. This is an educational analysis, **not** a production lending system.
 
-- Investigate associations between borrower characteristics and payment difficulties.
-- Use DuckDB and SQL to develop reproducible financial-risk analyses.
-- Engineer applicant-level features from historical credit data.
-- Compare statistical and machine-learning classification models, with careful out-of-sample evaluation.
-- Examine model explainability, risk thresholds, calibration, and decision trade-offs.
-- Build a portfolio dashboard summarizing findings and results.
+> **Evaluation status:** All predictive performance figures below are from the **validation partition**. The held-out test set is reserved for final evaluation; its results are not reported here.
 
-## Dataset and target
+## Key results
 
-The main labeled table, `application_train.csv`, contains **307,511 applications** and **122 columns**. The target, `TARGET`, identifies the dataset's defined repayment-difficulty outcome (`1`) versus its absence (`0`); it should not be interpreted as a universal definition of loan default. The positive class comprises approximately **8.07%** of applications.
+| Finding | Validation / analysis result |
+|---|---:|
+| LightGBM ROC-AUC | **0.7541** |
+| LightGBM average precision | **0.2373** |
+| Logistic Regression ROC-AUC | 0.7441 |
+| Logistic Regression average precision | 0.2208 |
+| LightGBM Brier score | **0.0681** |
+| Observed difficulty rate in highest risk decile | **27.13%** |
+| Lift in highest risk decile | **3.36×** |
+| Positive cases captured in top 20% of risk scores | **51.80%** |
+| Relative improvement in cross-validation average precision from adding bureau features | **5.23%** |
 
-This dataset contains sensitive financial and demographic attributes. Findings are exploratory and should not be used to make real lending decisions.
+**Key takeaway:** LightGBM produced better ranking metrics than the Logistic Regression baseline on the validation set. At an approximately 10% review capacity, its highest-scoring applications contained **33.62% of all observed positive cases**. Historical bureau features provided measurable incremental predictive value in a three-fold feature ablation experiment.
 
-## Findings so far: Days 2–3
+These are associations and historical predictive results, not evidence that reviewing or denying a particular application prevents a loss.
 
-The Day 3 analyses use SQL Common Table Expressions, `NTILE()` window functions, and aggregate payment-difficulty rates. The figures below are descriptive rates from notebook outputs, **not causal effects or predictive model performance**.
+## Interactive dashboard
 
-| Analysis | Observed finding |
-| --- | --- |
-| Credit-to-income ratio | Difficulty peaked at **8.93%** in the middle ratio quintile, compared with **7.33%** in the lowest and **7.25%** in the highest quintile; the relationship was non-linear. |
-| Income quintiles | The highest-income quintile had a **6.80%** difficulty rate, versus **8.72%** in the second quintile. |
-| Annuity-to-income ratio | Difficulty increased from **7.20%** in the lowest quintile to **8.70%** in the fourth, then eased to **8.51%** in the fifth. |
-| Employment duration | The observed rate was **11.07%** for 1–3 years of employment versus **5.19%** for 10+ years. |
+The Streamlit dashboard brings the analysis into a single, business-oriented interface, with sections for:
 
-### Interpretation
+- **Model overview:** ROC-AUC, average precision, and Brier score comparisons.
+- **Risk segmentation:** observed vs. predicted difficulty by decile, lift, and cumulative gains.
+- **Financial segments:** subgroup analyses by income, annuity burden, and bureau-history availability.
+- **Review scenarios:** threshold and capacity comparisons with adjustable *hypothetical* review and missed-case costs.
+- **Explainability:** global SHAP feature importance.
 
-- **No single financial ratio tells the whole story.** The credit-to-income pattern is non-monotonic, suggesting that multivariable analysis will be important.
-- **Income and requested credit should be considered together.** Higher-income applicants had larger average requested credit amounts but lower observed difficulty at the top end of the income distribution.
-- **Employment history is associated with differences in outcomes,** though other borrower characteristics may confound the relationship.
-- **Data quality affects interpretation.** The `DAYS_EMPLOYED = 365243` sentinel value must be treated separately from ordinary employment duration.
+**Run locally:**
 
-**Reproducibility note:** SQL `NTILE()` queries should order by a unique identifier (for example, `ORDER BY credit_income_ratio, SK_ID_CURR`) to handle tied ratios deterministically. Slight changes in reported quintile values are possible after rerunning corrected queries.
+```bash
+conda env create -f environment.yml
+conda activate homecredit
+python -m streamlit run dashboard/app.py
+```
 
-See the detailed analysis in [`notebooks/02_borrower_risk.ipynb`](notebooks/02_borrower_risk.ipynb) and the SQL in [`sql/02_borrower_risk_analysis.sql`](sql/02_borrower_risk_analysis.sql). A narrative findings report can be added at `reports/day03_risk_findings.md`.
+If the `homecredit` environment already exists, use `conda activate homecredit` rather than creating it again. Ensure Streamlit and Plotly are installed in that environment; their dependencies should be reflected in `environment.yml`.
 
-## Technology stack
+**Live dashboard:** Not yet linked. Add the public Streamlit URL here after deployment and verification.
 
-**Used so far:** Python, pandas, NumPy, SQL, DuckDB, Jupyter, matplotlib / seaborn.  
-**Planned:** scikit-learn, LightGBM, SHAP, Streamlit.
+The dashboard is designed around **aggregated CSV reports** rather than raw applicant records or a deployed prediction endpoint. Its cost scenarios are illustrative and do not make credit decisions.
 
-## Repository structure
+## Data
+
+**Source:** [Kaggle — Home Credit Default Risk](https://www.kaggle.com/competitions/home-credit-default-risk)
+
+The project begins with `application_train.csv` and aggregates historical credit information from `bureau.csv`.
+
+| Source | Size | Role |
+|---|---:|---|
+| `application_train.csv` | 307,511 applications | Labeled applicant-level outcomes and application features |
+| `bureau.csv` | 1,716,428 records | Historical credit-account features aggregated by applicant |
+
+The target variable, `TARGET`, denotes the dataset's recorded payment-difficulty outcome. The positive class represents approximately **8.07%** of labeled applications, creating an imbalanced classification problem.
+
+Raw and processed datasets are excluded from version control. Download the dataset from Kaggle and place the required source CSV files under `data/raw/` before reproducing the data preparation notebooks.
+
+## Workflow and methodology
+
+### 1. Exploratory analysis and SQL segmentation
+
+Used **DuckDB, SQL, and pandas** to examine target imbalance, missing values, outliers, income and repayment burden, employment duration, and historical credit coverage.
+
+Selected observations:
+
+- The target distribution is approximately **91.93% negative / 8.07% positive**.
+- Historical payment-difficulty rates vary across employment-duration groups and financial-burden quintiles; several relationships are **non-monotonic**.
+- Among labeled applications, borrowers without a matched bureau history had an observed difficulty rate of approximately **10.12%**, compared with **7.73%** for those with bureau history. This association does not establish causation.
+
+### 2. Credit bureau feature engineering
+
+Aggregated bureau records to one row per applicant using SQL and joined the results to application data. Features include historical account counts, active and closed accounts, total credit and debt, overdue amounts, credit age, and debt-to-credit ratios.
+
+Additional financial variables include credit-to-income, annuity-to-income, employment duration, and a flag for the special `DAYS_EMPLOYED` sentinel value.
+
+**Integrity checks:** The engineered modeling table retained **307,511 unique applicant rows**, without introducing duplicate application identifiers.
+
+### 3. Predictive modeling
+
+Trained an interpretable **Logistic Regression** benchmark and a **LightGBM** gradient-boosted classifier on the same original feature set, preprocessing design, and stratified partitions.
+
+| Partition | Applications |
+|---|---:|
+| Training | 184,506 |
+| Validation | 61,502 |
+| Held-out test | 61,503 |
+
+The pipeline uses 27 original predictors (22 numerical, 5 categorical), with imputation, numerical scaling, and one-hot encoding. Model comparisons use probabilities rather than relying only on a default classification threshold.
+
+| Metric | Logistic Regression | LightGBM |
+|---|---:|---:|
+| ROC-AUC | 0.7441 | **0.7541** |
+| Average precision | 0.2208 | **0.2373** |
+| Brier score (lower is better) | 0.0688 | **0.0681** |
+| Precision among top 10% scores | 25.78% | **27.13%** |
+| Recall among top 10% scores | 31.94% | **33.62%** |
+
+LightGBM used regularization and validation-based early stopping; the selected model stopped at **524 boosting iterations**. Since the validation partition was used during model development, results on that partition may be optimistic.
+
+### 4. Robustness and feature ablation
+
+A three-fold stratified analysis on the original training partition yielded:
+
+| Metric | Mean across folds |
+|---|---:|
+| ROC-AUC | 0.7466 |
+| Average precision | 0.2317 |
+| Brier score | 0.0684 |
+
+Ablation experiments compared application-only predictors with application **plus bureau-derived features**. Including bureau features improved mean ROC-AUC from approximately **0.7401 to 0.7466**, and mean average precision from **0.2202 to 0.2317** (approximately **5.23% relative improvement**). The full feature set also improved Brier score.
+
+The training-versus-validation performance gap indicates some overfitting remains. These are exploratory robustness checks, not a substitute for independent test evaluation or out-of-time validation.
+
+### 5. Explainability with SHAP
+
+Used **Tree SHAP** on a reproducible 1,000-application sample from the validation partition to investigate global feature importance, feature effects, selected individual predictions, and bureau feature contributions.
+
+The largest individual mean absolute SHAP contributions came from `EXT_SOURCE_2`, `EXT_SOURCE_3`, and `EXT_SOURCE_1`, followed by employment and loan-related characteristics. A bureau debt-to-credit ratio also ranked among leading transformed features.
+
+Explanations were computed in **raw log-odds**, not probability percentage points. SHAP explains the fitted model's behavior, **not the causal impact** of an applicant characteristic on repayment outcomes.
+
+### 6. Risk deciles and cumulative gains
+
+Ranked validation applications by LightGBM score and grouped them into ten approximately equal-sized deciles.
+
+| Measure | Result |
+|---|---:|
+| Lowest-decile observed difficulty | 1.58% |
+| Highest-decile observed difficulty | **27.13%** |
+| Highest-decile lift vs. overall rate | **3.36×** |
+| Positive cases captured in top 10% | 33.62% |
+| Positive cases captured in top 20% | **51.80%** |
+| Positive cases captured in top 30% | 64.75% |
+
+Observed repayment-difficulty rates increased across the ranked deciles. Predicted and observed rates also tracked relatively closely at the decile level; this is encouraging but does not establish calibration on future populations.
+
+### 7. Threshold and hypothetical cost analysis
+
+Compared probability thresholds with fixed-capacity rankings. The illustrative cost function was:
+
+```text
+Modeled cost = (applications reviewed × cost per review)
+             + (unflagged positive cases × cost per missed case)
+```
+
+Under **illustrative** assumptions of 25 cost units per review and 500 units per missed positive case, a threshold of **0.06** minimized cost *among the tested probability thresholds* on the validation data, flagging 27,951 applications and capturing 78.45% of positive cases.
+
+Varying the missed-case penalty changed the preferred threshold substantially. These numbers are **not actual losses, measured savings, or a validated decision policy**: the analysis assumes that flagging a historical positive case avoids its modeled penalty, which has not been demonstrated.
+
+For hard review-capacity limits, the notebook uses integer applicant counts to avoid exceeding a stated limit through rounding. Capacity-based results should be regenerated and checked before publication if the source CSV still reflects older ceiling-rounded counts.
+
+## Project structure
 
 ```text
 HomeCreditDefaultRisk/
+├── .streamlit/
+│   └── config.toml                 # Optional dashboard theme
+├── dashboard/
+│   ├── app.py                      # Streamlit application
+│   └── requirements.txt            # Dashboard-only dependencies
+├── data/
+│   ├── raw/                         # Kaggle files; gitignored
+│   └── processed/                   # Engineered parquet; gitignored
 ├── notebooks/
 │   ├── 01_exploration.ipynb
-│   └── 02_borrower_risk.ipynb
-├── sql/
-│   ├── 01_exploratory_analysis.sql
-│   └── 02_borrower_risk_analysis.sql
-├── reports/
-├── src/
-├── dashboard/
-├── tests/
-├── data/                 # Local only; not committed
-├── requirements.txt
+│   ├── 02_borrower_risk.ipynb
+│   ├── 03_credit_history_features.ipynb
+│   ├── 04_baseline_model.ipynb
+│   ├── 05_lightgbm_model.ipynb
+│   ├── 06_model_robustness.ipynb
+│   ├── 07_shap_explainability.ipynb
+│   ├── 08_risk_segmentation.ipynb
+│   └── 09_decision_analysis.ipynb
+├── sql/                             # SQL exploratory and feature engineering scripts
+├── reports/                         # Findings, aggregate CSV metrics, and figures
+├── models/                          # Locally saved models; gitignored
+├── src/                             # Supporting code (as developed)
+├── tests/                           # Validation tests (as developed)
+├── environment.yml                  # Conda project environment
 └── README.md
 ```
 
-## Getting started
+Some local directories may not appear on GitHub if empty or excluded by `.gitignore`.
 
-1. Download the dataset from the [Kaggle competition page](https://www.kaggle.com/competitions/home-credit-default-risk/data) after accepting the applicable rules.
-2. Place `application_train.csv` in `data/raw/` (and additional tables there as needed).
-3. Create a virtual environment and install dependencies:
+## Reproduce the analysis
 
-```bash
-conda env create -f environment.yml
-conda activate homecredit
-```
+1. **Clone the repository.**
 
-4. Open `notebooks/01_exploration.ipynb`, followed by `notebooks/02_borrower_risk.ipynb`. Select the project's `.homecredit` kernel and run the cells from the top.
+   ```bash
+   git clone https://github.com/prrrrypt/HomeCreditDefaultRisk.git
+   cd HomeCreditDefaultRisk
+   ```
 
-Notebook paths assume they are executed from the `notebooks/` folder or the repository root. Raw dataset files are intentionally excluded from version control.
+2. **Create and activate the Conda environment.**
 
-## Roadmap
+   ```bash
+   conda env create -f environment.yml
+   conda activate homecredit
+   ```
 
-| Phase | Status | Goal |
-| --- | --- | --- |
-| Setup and environment | Complete | Repository structure and dependencies |
-| Exploratory data analysis | Complete | Target distribution, data quality, missingness |
-| Borrower segmentation with SQL | Complete | Financial ratios, income and employment analysis |
-| Historical credit feature engineering | Next | Aggregate `bureau.csv` data at applicant level |
-| Baseline and advanced modeling | Planned | Logistic regression and gradient boosting |
-| Explainability and decision analysis | Planned | Calibration, SHAP, and threshold trade-offs |
-| Interactive dashboard | Planned | Summarize portfolio-level risk analytics |
+3. **Download the data** from the Kaggle competition page and put the source files in `data/raw/`. Follow the dataset's licensing and access terms.
+
+4. **Run the notebooks in numerical order**, beginning with exploratory analysis and feature engineering. The later notebooks expect the locally generated `data/processed/modeling_features.parquet`; dashboard source tables are generated by the corresponding analysis notebooks.
+
+5. **Launch the dashboard** after the aggregate report CSVs have been generated:
+
+   ```bash
+   python -m streamlit run dashboard/app.py
+   ```
+
+For a dashboard-only deployment, use `dashboard/requirements.txt` and ensure the aggregate CSVs referenced by `dashboard/app.py` are committed. The dashboard is intended to operate without raw applicant-level datasets or serialized model artifacts.
+
+## Tools and skills
+
+**Languages & querying:** Python, SQL, DuckDB  
+**Data processing:** pandas, NumPy, Parquet  
+**Machine learning:** scikit-learn, LightGBM  
+**Evaluation:** ROC-AUC, average precision, calibration, cross-validation, ablation, lift, cumulative gains  
+**Explainability:** SHAP  
+**Visualization & delivery:** matplotlib, Plotly, Streamlit, Jupyter, Git/GitHub
 
 ## Limitations and responsible use
 
-The dataset describes historical payment-difficulty labels, not a complete measure of creditworthiness. Group-level associations do not establish causation. Subsequent modeling should address class imbalance, leakage, missing data, reproducibility, calibration, and fairness considerations. In particular, applicant age and other sensitive or proxy variables warrant careful evaluation rather than automatic deployment in any decision-making process.
+- Results are based on historical data and a validation partition used during model development; **no final held-out test metrics are reported**.
+- Random stratified splits do not establish out-of-time or out-of-population stability.
+- Financial and external-source fields may encode sensitive proxy relationships; feature provenance, point-in-time availability, fairness, and legal compliance require additional review.
+- SHAP values and subgroup associations are not causal explanations.
+- Review-cost scenarios are hypothetical, and model predictions do not demonstrate that interventions avoid losses.
+- The model is **not intended for automated credit approvals, denials, or adverse-action decisions**.
 
-## Data attribution
+## Next steps
 
-Source: [Home Credit Default Risk, Kaggle competition](https://www.kaggle.com/competitions/home-credit-default-risk/data). Dataset files are not redistributed in this repository; use is subject to the competition's applicable rules.
+- **Day 13:** Freeze the selected modeling procedure, conduct a one-time final held-out evaluation, and audit reproducibility and dashboard consistency.
+- **Day 14:** Complete documentation and portfolio presentation, verify the public dashboard, and finalize the project summary.
 
-## Interactive Risk Analytics Dashboard
+---
 
-An interactive Streamlit dashboard translates model evaluation results into business-oriented risk analytics.
-
-### Features
-
-- **Model Comparison:** Compare Logistic Regression and LightGBM using ROC-AUC, Average Precision, and Brier Score.
-- **Risk Segmentation:** Explore observed repayment-difficulty rates, predicted probabilities, lift, and cumulative gains across risk deciles.
-- **Financial Subgroups:** Examine risk and model performance across income, payment burden, and credit bureau availability.
-- **Review Scenarios:** Evaluate probability thresholds, fixed review capacities, and illustrative screening-cost assumptions.
-- **Explainability:** Explore global SHAP feature contributions to LightGBM predictions.
-
-### Run Locally
-
-Create the project environment using `environment.yml`, then run:
-
-```bash
-python -m streamlit run dashboard/app.py
-```
-
-The dashboard reads aggregated validation results from `reports/` and does not require downloading the raw Kaggle dataset.
-
-**Disclaimer:** This project is intended for educational and analytical purposes. The model and hypothetical cost scenarios are not validated for real-world lending decisions.
-
-## Interactive Risk Analytics Dashboard
-
-This project includes a Streamlit dashboard presenting credit risk modeling results in a business-oriented analytical interface.
-
-### Dashboard Features
-
-- **Model Performance:** Compare Logistic Regression and LightGBM using ROC-AUC, Average Precision, and Brier Score.
-- **Risk Segmentation:** Explore predicted-risk deciles, observed repayment-difficulty rates, and model lift.
-- **Cumulative Gains:** Examine positive-case capture under different hypothetical review capacities.
-- **Financial Segments:** Compare model performance across income quintiles, annuity burden, and credit bureau availability.
-- **Decision Analysis:** Explore hypothetical review costs, missed-case penalties, and probability threshold tradeoffs.
-- **Explainability:** Examine global SHAP feature importance.
-
-### Key Results
-
-- LightGBM achieved a validation ROC-AUC of **0.7541** and Average Precision of **0.2373**.
-- The highest predicted-risk decile had an observed difficulty rate of **27.13%**, representing **3.36× lift**.
-- The highest-scoring 20% of applications contained **51.80% of observed positive cases**.
-- Historical bureau feature engineering increased cross-validation Average Precision by approximately **5.23%** relative to an application-only model.
-
-### Run Locally
-
-```bash
-conda env create -f environment.yml
-conda activate homecredit
-python -m streamlit run dashboard/app.py
-```
-
-### Live Dashboard
-
-[Add your Streamlit URL after deployment]
-
-### Limitations
-
-All displayed predictive performance metrics are based on validation data. The final held-out test set has not been evaluated.
-
-The cost scenarios use hypothetical assumptions and do not represent actual financial savings or validated lending policies.
-
-This project is intended for educational research and portfolio demonstration, not automated credit decisions.
+**Dataset:** [Home Credit Default Risk — Kaggle](https://www.kaggle.com/competitions/home-credit-default-risk)  
+**Repository:** [prrrrypt/HomeCreditDefaultRisk](https://github.com/prrrrypt/HomeCreditDefaultRisk)
