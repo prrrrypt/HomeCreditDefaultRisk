@@ -245,10 +245,29 @@ For a dashboard-only deployment, use `dashboard/requirements.txt` and ensure the
 - Review-cost scenarios are hypothetical, and model predictions do not demonstrate that interventions avoid losses.
 - The model is **not intended for automated credit approvals, denials, or adverse-action decisions**.
 
-## Next steps
+## Project Status
 
-- **Day 13:** Freeze the selected modeling procedure, conduct a one-time final held-out evaluation, and audit reproducibility and dashboard consistency.
-- **Day 14:** Complete documentation and portfolio presentation, verify the public dashboard, and finalize the project summary.
+**Status: Complete — 14-Day End-to-End Credit Risk Analytics Project**
+
+The project includes data exploration, SQL-based feature engineering, predictive modeling, cross-validation, SHAP explainability, risk segmentation, cost-sensitive analysis, and final held-out evaluation.
+
+**Final results:**
+- LightGBM achieved **0.7487 ROC-AUC** and **0.2329 Average Precision** on 61,503 held-out applications.
+- LightGBM improved Average Precision by approximately **6.9%** over Logistic Regression.
+- The highest-risk 20% of test applications captured **50.03% of recorded repayment-difficulty cases**.
+- The Streamlit dashboard presents model performance, risk segmentation, hypothetical review scenarios, and explainability.
+
+**[Explore the Live Dashboard](https://homecreditdefaultrisk.streamlit.app/)**
+
+### Potential Future Improvements
+
+While the initial project is complete, potential extensions include:
+
+- **Temporal validation:** Evaluate performance across different application periods.
+- **Fairness assessment:** Investigate disparities and proxy effects across relevant borrower groups, subject to available data and responsible evaluation practices.
+- **Probability calibration:** Explore calibration improvements using separate development data.
+- **Model monitoring:** Develop methods to detect data drift and changes in predictive performance over time.
+- **Business validation
 
 ---
 
